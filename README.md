@@ -1,3 +1,3 @@
 # Jumming Girl Vercel App
 
-![jumming-girl](./jumminggirl.png)
+![jumming-girl](./image.png)
