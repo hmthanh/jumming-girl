@@ -1,59 +1,59 @@
-import { useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, useAnimations, useScroll, ScrollControls } from "@react-three/drei";
-import { BufferGeometry, Object3D, Object3DEventMap, Skeleton } from "three";
-// import { GroupProps } from "@react-three/fiber";
+import { useRef, useState } from 'react'
+import React, { useEffect } from "react";
+import { Canvas, RootState, useFrame } from "@react-three/fiber";
+import { useGLTF, useAnimations, useScroll, ScrollControls, SoftShadows } from "@react-three/drei";
+import { EffectComposer, TiltShift2 } from "@react-three/postprocessing";
+import { GroupProps } from "@react-three/fiber";
+import { Group } from 'three/src/objects/Group.js';
+import { AnimationClip } from 'three/src/animation/AnimationClip.js';
+import { AnimationAction } from 'three/src/animation/AnimationAction.js';
 
-interface CustomObj3D extends Object3D<Object3DEventMap> {
-  geometry: BufferGeometry
-  skeleton: Skeleton
-}
+interface ModelProps extends GroupProps { }
 
-const Model = (props: any) => {
-  // const group = useRef<Group>(null);
+const Model: React.FC<ModelProps> = (props) => {
+  const group = useRef<Group>(null);
   const scroll = useScroll();
-  const { nodes, materials, animations } = useGLTF("/jump-transformed.glb");
+  const { nodes, materials, animations } = useGLTF("/jump-transformed.glb") as any;
   // console.log("nodes", nodes)
-  // console.log("animations", animations)
-  const { ref, actions, names } = useAnimations(animations);
+  // console.log(animations)
+  const { ref, actions, names } = useAnimations<AnimationClip>(animations);
 
+  // console.log(names)
   // useEffect(() => {
-  //   if (group.current == null || group.current == undefined) {
-  //     group.current = ref.current
+  //   if (actions.jump) {
+  //     return void (actions.jump.play())
   //   }
-  // })
-
+  // }, [actions]);
   useEffect(() => {
     if (actions && names.length) {
-      if (actions.jump) {
-        return void (actions.jump.play());
-      }
+      // console.log("actions", actions[names[0]])
+      const action = actions[names[0]] as AnimationAction;
+      // console.log("action", action)
+      action.play();
     }
-  }, [actions])
+  }, [actions, names, group])
 
-  // state: RootState, delta: number
-  useFrame(() => {
+  useFrame((state: RootState, delta: number, xrFrame: any) => {
     if (actions.jump) {
       // console.log(state)
+      console.log("actions.jump.getClip().duration", actions.jump.getClip().duration, "scroll.offset", scroll.offset)
       return (actions.jump.time = actions.jump.getClip().duration * scroll.offset);
     }
   });
 
-  // console.log("nodes.Ch03.geometry", nodes.Ch03.geometry)
-  // console.log("nodes.Ch03.skeleton", nodes.Ch03.skeleton)
   if (ref == undefined || ref == null) {
     return <></>
   } else {
-    const nodesObj = nodes.Ch03 as CustomObj3D
     return (
-      <group {...props} ref={ref}>
+      // <group {...props} ref={ref}>
+      <group {...props} ref={ref} dispose={null}>
         <primitive object={nodes.mixamorigHips} />
         <skinnedMesh
           castShadow
           receiveShadow
-          geometry={nodesObj.geometry}
+          geometry={nodes.Ch03.geometry}
           material={materials.Ch03_Body}
-          skeleton={nodesObj.skeleton}
+          skeleton={nodes.Ch03.skeleton}
         />
       </group>
     );
